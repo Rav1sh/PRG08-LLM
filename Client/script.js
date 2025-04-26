@@ -1,30 +1,21 @@
 const form = document.querySelector("form");
 const chatfield = document.getElementById("chatfield");
 const submitButton = form.querySelector("button");
-const outputElement = document.getElementById("output");
-const questionField = document.getElementById("vraag");
+const chatHistory = document.getElementById("chat-history");
 
-let messages = [];
-
-// load messages from localStorage
-function loadMessages() {
-    const storedMessages = JSON.parse(localStorage.getItem("messages"));
-    if (storedMessages) {
-        messages = storedMessages;
-    } else {
-        // Default system message if nothing is stored
-        messages = [
-            { role: "system", content: "Je bent een taalcoach die gespecialiseerd is in het helpen van studenten met spelling, grammatica en zinnen. Je hebt geduld en legt uit waarom iets juist of fout is, zodat de student ervan leert. Als een student vraagt hoe een zin grammaticaal correct is, geef dan niet alleen het juiste antwoord, maar leg ook uit waarom het correct is en bied alternatieve zinnen aan." }
-        ];
+// Houdt de berichten bij, inclusief systeem-instructie voor de AI.
+let messages = [
+    {
+        role: "system",
+        content: "Je bent een taalcoach die gespecialiseerd is in het helpen van studenten met spelling, grammatica en zinnen. Je hebt geduld en legt uit waarom iets juist of fout is, zodat de student ervan leert. Als een student vraagt hoe een zin grammaticaal correct is, geef dan niet alleen het juiste antwoord, maar leg ook uit waarom het correct is en bied alternatieve zinnen aan."
     }
-}
+];
 
-// Call the loadMessages function to initialize messages
-loadMessages();
-
+// Zet de submitknop uit totdat er tekst is ingevoerd.
 submitButton.disabled = true;
 submitButton.classList.add("disabled-button");
 
+// Controleert of er tekst is ingevoerd om de knop te activeren.
 chatfield.addEventListener("input", () => {
     submitButton.disabled = !chatfield.value.trim();
     submitButton.classList.toggle("disabled-button", submitButton.disabled);
@@ -32,43 +23,45 @@ chatfield.addEventListener("input", () => {
 
 form.addEventListener("submit", askQuestion);
 
+// Stuurt de vraag van de gebruiker en haalt het antwoord van de AI op.
 async function askQuestion(e) {
     e.preventDefault();
 
     const vraag = chatfield.value.trim();
     if (!vraag) return;
 
-    // Handle user question and update UI
-    handleUserQuestion(vraag);
+    handleHumanQuestion(vraag); // Verwerkt de vraag van de gebruiker.
 
     try {
-        await fetchAIResponse();
+        await fetchAIResponse(); // Haalt het antwoord van de server op.
     } catch (error) {
-        outputElement.textContent = "Streaming mislukt. Probeer opnieuw.";
         console.error("Streaming fout:", error);
     }
 
-    // Re-enable the submit button
     submitButton.disabled = false;
     submitButton.classList.remove("disabled-button");
 }
 
-function handleUserQuestion(vraag) {
-    // Add the user question to the messages
-    messages.push({ role: "user", content: vraag });
+// Voegt de vraag van de gebruiker toe aan de chat en aan messages array.
+function handleHumanQuestion(vraag) {
+    messages.push({ role: "human", content: vraag });
 
-    // Update the question in the UI
-    questionField.textContent = vraag;
+    const chatItem = document.createElement("div");
+    chatItem.className = "chat-item";
+    chatItem.innerHTML = `
+        <p class="question">${vraag}</p>
+        <p class="answer">Bezig met antwoorden...</p>`;
 
-    // Disable submit button and clear output element
+    chatHistory.appendChild(chatItem);
+    chatHistory.currentAnswerElement = chatItem.querySelector(".answer");
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+    chatfield.value = "";
     submitButton.disabled = true;
     submitButton.classList.add("disabled-button");
-    outputElement.textContent = "";
-
-    // Clear the input field
-    chatfield.value = "";
 }
 
+// Stuurt de chatgeschiedenis naar de server en begint streaming van antwoord.
 async function fetchAIResponse() {
     const response = await fetch("http://localhost:3000/", {
         method: "POST",
@@ -82,16 +75,16 @@ async function fetchAIResponse() {
         throw new Error("Geen geldige response ontvangen.");
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
+    const reader = response.body.getReader(); // Maakt een reader om streaming te lezen.
+    const decoder = new TextDecoder("utf-8"); // Decodeert de bytes naar tekst.
     let aiAntwoord = "";
 
-    // Handle the streaming response
     await handleStreamingResponse(reader, decoder, aiAntwoord);
 }
 
-// Function to handle the streaming response and update UI in real-time
 async function handleStreamingResponse(reader, decoder, aiAntwoord) {
+    const answerElement = chatHistory.currentAnswerElement;
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -104,13 +97,13 @@ async function handleStreamingResponse(reader, decoder, aiAntwoord) {
                 const data = lijn.replace("data: ", "");
 
                 if (data === "[DONE]") {
-                    messages.push({ role: "assistant", content: aiAntwoord });
-                    localStorage.setItem("messages", JSON.stringify(messages)); // Save messages to localStorage
+                    messages.push({ role: "ai", content: aiAntwoord });
                     return;
                 }
 
-                aiAntwoord += data;
-                outputElement.textContent = aiAntwoord;
+                aiAntwoord += data; // Voegt het binnengekomen tekstdeel toe.
+                answerElement.textContent = aiAntwoord; // Update het antwoord live.
+                chatHistory.scrollTop = chatHistory.scrollHeight;
             }
         }
     }

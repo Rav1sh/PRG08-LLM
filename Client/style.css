@@ -27,31 +27,20 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     width: 600px;
     box-sizing: border-box;
-}
-
-#vraag {
-    font-weight: bold;
-    font-size: 1.2rem;
+    max-height: 650px;
 }
 
 h1 {
     font-size: 2rem;
     color: #4a90e2;
     font-weight: 700;
-    display: flex;
+    
     align-items: center;
     gap: 10px;
 }
 
 .icon {
     font-size: 2rem;
-}
-
-.intro-text {
-    font-size: 1.1rem;
-    color: #333;
-    margin-top: 10px;
-    max-width: 80%;
 }
 
 form {
@@ -116,4 +105,47 @@ button:hover {
 
 .tips-container ul li {
     margin-bottom: 10px;
+}
+
+#chat-history {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.chat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.question {
+    align-self: flex-end;
+    background-color: #b300ff;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+.answer {
+    align-self: flex-start;
+    background-color: #e6e6fa;
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-top: 5px;
+    max-width: 80%;
+    word-wrap: break-word;
+    text-align: left;
 }
