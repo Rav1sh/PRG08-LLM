@@ -3,6 +3,8 @@ import cors from 'cors';
 import { AzureChatOpenAI } from "@langchain/openai";
 import path from 'path';
 import { fileURLToPath } from 'url'; // Needed for __dirname
+import 'dotenv/config';
+
 
 const model = new AzureChatOpenAI({ temperature: 1 });
 
