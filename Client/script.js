@@ -30,10 +30,11 @@ async function askQuestion(e) {
     const vraag = chatfield.value.trim();
     if (!vraag) return;
 
-    handleHumanQuestion(vraag); // Verwerkt de vraag van de gebruiker.
+    // Verwerkt de vraag van de gebruiker.
+    handleHumanQuestion(vraag); 
 
     try {
-        await fetchAIResponse(); // Haalt het antwoord van de server op.
+        await fetchAIResponse();
     } catch (error) {
         console.error("Streaming fout:", error);
     }
